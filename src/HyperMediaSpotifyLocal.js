@@ -82,9 +82,9 @@ export class HyperMediaSpotifyLocal extends EventEmitter {
           isRunning: true,
           state: status.playing ? 'playing' : 'paused',
           progress: status.playing_position * 1000,
-          track: (status.track && {
+          track: (status.track.track_resource && {
             name: status.track.track_resource.name,
-            artist: status.track.artist_resource.name,
+            artist: status.track.artist_resource && status.track.artist_resource.name,
             coverUrl,
             duration: status.track.length * 1000
           }) || {}
