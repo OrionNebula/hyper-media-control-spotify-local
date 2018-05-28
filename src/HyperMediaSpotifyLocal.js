@@ -12,13 +12,47 @@ export class HyperMediaSpotifyLocal extends EventEmitter {
       defaultPort: undefined
     }, config.spotifyLocal || {})
 
-    this.laststatus = { isRunning: false }
+    this.laststatus = { isRunning: false, state: 'stopped' }
+
+    this.on('status', status => {
+      if (status.state === 'playing' && this.laststatus.state !== 'playing') {
+        this.progressIntervalHandle = setInterval(() => this.updateProgress(), 1000)
+      } else if (status.state !== 'playing' && this.laststatus.state === 'playing') {
+        clearInterval(this.progressIntervalHandle)
+      }
+      this.laststatus = status
+    })
   }
 
   attemptConnect () {
     spotilocal.init(this.config.defaultPort).then(spotify => {
       this.spotify = spotify
+      spotify.getStatus().then(status => this.composeStatus(status)).then(status => {
+        this.emit('status', status)
+      })
+      this.statusLoop()
     }).catch(() => this.attemptConnect())
+  }
+
+  handleStatus (status) {
+    if (!status.error) {
+      this.composeStatus(status).then(status => {
+        this.emit('status', status)
+      })
+      this.statusLoop()
+    } else {
+      this.emit('status', { isRunning: false, state: 'stopped' })
+      this.attemptConnect()
+    }
+  }
+
+  statusLoop () {
+    this.spotify.getStatus(['play', 'pause', 'login', 'logout', 'error', 'ap']).then(status => this.handleStatus(status))
+  }
+
+  updateProgress () {
+    if (this.laststatus.progress) this.laststatus.progress += 1000
+    this.emit('status', this.laststatus)
   }
 
   playerName () {
@@ -35,26 +69,10 @@ export class HyperMediaSpotifyLocal extends EventEmitter {
 
   activate () {
     this.attemptConnect()
-    this.eventPumpHandle = setInterval(() => this.eventPump(), 500)
-  }
-
-  eventPump () {
-    if (!this.spotify) {
-      this.emit('status', { isRunning: false })
-      return
-    }
-
-    this.spotify.getStatus().then(status => this.composeStatus(status)).then(status => {
-      this.emit('status', this.laststatus = status)
-    }).catch(() => {
-      this.spotify = undefined
-      this.emit('status', this.laststatus = { isRunning: false })
-      this.attemptConnect()
-    })
   }
 
   deactivate () {
-    clearInterval(this.eventPumpHandle)
+    // TODO: This is not spec, but it works by coincidence. Don't keep this empty.
   }
 
   composeStatus (status) {
