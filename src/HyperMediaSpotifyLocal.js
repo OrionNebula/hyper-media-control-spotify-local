@@ -13,15 +13,6 @@ export class HyperMediaSpotifyLocal extends EventEmitter {
     }, config.spotifyLocal || {})
 
     this.laststatus = { isRunning: false, state: 'stopped' }
-
-    this.on('status', status => {
-      if (status.state === 'playing' && this.laststatus.state !== 'playing') {
-        this.progressIntervalHandle = setInterval(() => this.updateProgress(), 1000)
-      } else if (status.state !== 'playing' && this.laststatus.state === 'playing') {
-        clearInterval(this.progressIntervalHandle)
-      }
-      this.laststatus = status
-    })
   }
 
   attemptConnect () {
@@ -47,6 +38,7 @@ export class HyperMediaSpotifyLocal extends EventEmitter {
   }
 
   statusLoop () {
+    if (!this.spotify) return
     this.spotify.getStatus(['play', 'pause', 'login', 'logout', 'error', 'ap'], 5).then(status => this.handleStatus(status))
   }
 
@@ -68,11 +60,21 @@ export class HyperMediaSpotifyLocal extends EventEmitter {
   }
 
   activate () {
+    this.on('status', status => {
+      if (status.state === 'playing' && this.laststatus.state !== 'playing') {
+        this.progressIntervalHandle = setInterval(() => this.updateProgress(), 1000)
+      } else if (status.state !== 'playing' && this.laststatus.state === 'playing') {
+        clearInterval(this.progressIntervalHandle)
+      }
+      this.laststatus = status
+    })
     this.attemptConnect()
   }
 
   deactivate () {
-    // TODO: This is not spec, but it works by coincidence. Don't keep this empty.
+    this.removeAllListeners()
+    clearInterval(this.progressIntervalHandle)
+    this.spotify = undefined
   }
 
   composeStatus (status) {
