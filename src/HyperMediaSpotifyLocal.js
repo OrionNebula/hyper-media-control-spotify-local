@@ -47,7 +47,7 @@ export class HyperMediaSpotifyLocal extends EventEmitter {
   }
 
   statusLoop () {
-    this.spotify.getStatus(['play', 'pause', 'login', 'logout', 'error', 'ap']).then(status => this.handleStatus(status))
+    this.spotify.getStatus(['play', 'pause', 'login', 'logout', 'error', 'ap'], 5).then(status => this.handleStatus(status))
   }
 
   updateProgress () {

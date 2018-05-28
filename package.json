@@ -1,6 +1,6 @@
 {
   "name": "hyper-media-control-spotify-local",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Extend hyper-media-control with support for Spotify via the local web server.",
   "main": "dist/index.js",
   "scripts": {
