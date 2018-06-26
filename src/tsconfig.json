@@ -8,7 +8,9 @@
             "dom"
         ],
         "declaration": true,
-        "outDir": "dist",
-        "allowJs": false
+        "outDir": "../dist",
+        "allowJs": false,
+        "strictNullChecks": true,
+        "noImplicitReturns": true
     }
 }

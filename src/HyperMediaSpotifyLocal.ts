@@ -7,7 +7,7 @@ import { Status as SpotifyStatus } from 'spotilocal/dist/src/status'
 const spotiLocal = new Spotilocal()
 
 export interface HyperMediaSpotifyLocalConfig {
-  defaultPort: number
+  defaultPort?: number
 }
 
 export class HyperMediaSpotifyLocal extends EventEmitter implements MediaPlugin {
@@ -16,10 +16,10 @@ export class HyperMediaSpotifyLocal extends EventEmitter implements MediaPlugin 
   spotify?: Spotilocal
   lastStatus: Status
   progressIntervalHandle: NodeJS.Timer
-  constructor (playerManager: PlayerManager, config: HyperMediaConfig) {
+  constructor (playerManager: PlayerManager, config: HyperMediaConfig & { spotifyLocal: HyperMediaSpotifyLocalConfig | undefined }) {
     super()
     this.playerManager = playerManager
-    this.config = { defaultPort: undefined, ...config['spotifyLocal'] }
+    this.config = config.spotifyLocal || {}
     this.lastStatus = { isRunning: false, state: State.Stopped }
   }
 
@@ -61,9 +61,11 @@ export class HyperMediaSpotifyLocal extends EventEmitter implements MediaPlugin 
   statusLoop () {
     if (!this.spotify) return
     this.spotify.getStatus([RETURN_ON_PLAY, RETURN_ON_PAUSE, RETURN_ON_LOGIN, RETURN_ON_LOGOUT, RETURN_ON_ERROR, RETURN_ON_AP], 5)
-      .then(status => {
-        if (!status['error']) {
-          this.composeStatus(status).then(status => this.emit('status', status))
+      .then((status: SpotifyStatus & { error: string }) => {
+        if (!status.error) {
+          this.composeStatus(status)
+            .then(status => this.emit('status', status))
+            .catch(_ => this.emit('status', { isRunning: false }))
           this.statusLoop()
         } else {
           this.emit('status', { isRunning: false, state: State.Stopped } as Status)
@@ -79,13 +81,14 @@ export class HyperMediaSpotifyLocal extends EventEmitter implements MediaPlugin 
   }
 
   playPause? (): void | Promise<Status> | Promise<void> {
-    if (!this.spotify) return
+    if (!this.spotify) return undefined
     return this.spotify.pause(this.lastStatus.state === State.Playing)
       .then(status => this.composeStatus(status))
   }
 
   composeStatus (status: SpotifyStatus): Promise<Status> {
-    return (status.track ? this.artForTrack(status.track.track_resource.location.og) : Promise.resolve(undefined))
+    let coverPromise = Promise.resolve(status.track && this.artForTrack(status.track.track_resource.location.og))
+    return coverPromise
       .then(coverUrl => ({
         isRunning: true,
         state: status.playing ? State.Playing : State.Paused,
@@ -93,21 +96,22 @@ export class HyperMediaSpotifyLocal extends EventEmitter implements MediaPlugin 
         track: (status.track.track_resource && {
           name: status.track.track_resource.name,
           artist: status.track.artist_resource && status.track.artist_resource.name,
-          coverUrl,
+          coverUrl: coverUrl || undefined,
           duration: status.track.length * 1000
         })
       }))
   }
 
-  artForTrack (trackUrl: string): Promise<string> {
+  artForTrack (trackUrl: string): Promise<string | null> {
     return new Promise((resolve, reject) => {
       request.get(trackUrl, (error, response, body) => {
         if (error) {
-          resolve(undefined)
+          resolve(null)
           return
         }
 
-        resolve((/<meta\s+property="og:image"\s+content="(.*?)"/g).exec(body)[1].toString())
+        const match = (/<meta\s+property="og:image"\s+content="(.*?)"/g).exec(body)
+        resolve(match && match[1].toString())
       })
     })
   }
