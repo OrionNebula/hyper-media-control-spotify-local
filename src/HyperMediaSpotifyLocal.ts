@@ -3,6 +3,7 @@ import { MediaPlugin, PlayerManager, Status, State, HyperMediaConfig } from 'hyp
 import * as request from 'request'
 import { Spotilocal, RETURN_ON_PLAY, RETURN_ON_PAUSE, RETURN_ON_LOGIN, RETURN_ON_LOGOUT, RETURN_ON_ERROR, RETURN_ON_AP } from 'spotilocal'
 import { Status as SpotifyStatus } from 'spotilocal/dist/src/status'
+import * as robot from 'robotjs'
 
 const spotiLocal = new Spotilocal()
 
@@ -84,6 +85,14 @@ export class HyperMediaSpotifyLocal extends EventEmitter implements MediaPlugin 
     if (!this.spotify) return undefined
     return this.spotify.pause(this.lastStatus.state === State.Playing)
       .then(status => this.composeStatus(status))
+  }
+
+  nextTrack? (): void {
+    robot.keyTap('audio_next')
+  }
+
+  previousTrack? (): void {
+    robot.keyTap('audio_prev')
   }
 
   composeStatus (status: SpotifyStatus): Promise<Status> {
