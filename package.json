@@ -4,11 +4,11 @@
   "description": "Extend hyper-media-control with support for Spotify via the local web server.",
   "main": "dist/index.js",
   "scripts": {
-    "lint": "tslint ./src/**.ts",
+    "lint": "tslint --config tslint.json --project src",
     "prebuild": "npm run lint && rimraf ./dist",
-    "build": "tsc",
-    "watch:build": "tsc --watch",
-    "prepublishonly": "npm run build"
+    "build": "tsc --project src",
+    "prepublishonly": "npm run build",
+    "test": "npm run build"
   },
   "repository": {
     "type": "git",
