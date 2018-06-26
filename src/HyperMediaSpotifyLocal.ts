@@ -17,8 +17,8 @@ export class HyperMediaSpotifyLocal extends EventEmitter implements MediaPlugin 
   spotify?: Spotilocal
   lastStatus: Status
   progressIntervalHandle: NodeJS.Timer
-  nextTrack: () => void | Promise<void> | Promise<Status>
-  previousTrack: () => void | Promise<void> | Promise<Status>
+  nextTrack?: () => void | Promise<void> | Promise<Status>
+  previousTrack?: () => void | Promise<void> | Promise<Status>
 
   constructor (playerManager: PlayerManager, config: HyperMediaConfig & { spotifyLocal: HyperMediaSpotifyLocalConfig | undefined }) {
     super()
