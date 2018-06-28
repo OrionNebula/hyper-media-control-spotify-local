@@ -3,6 +3,7 @@ import { MediaPlugin, PlayerManager, Status, State, HyperMediaConfig } from 'hyp
 import * as request from 'request'
 import { Spotilocal, RETURN_ON_PLAY, RETURN_ON_PAUSE, RETURN_ON_LOGIN, RETURN_ON_LOGOUT, RETURN_ON_ERROR, RETURN_ON_AP } from 'spotilocal'
 import { Status as SpotifyStatus } from 'spotilocal/dist/src/status'
+import { transform } from './nextPrev'
 
 const spotiLocal = new Spotilocal()
 
@@ -16,6 +17,9 @@ export class HyperMediaSpotifyLocal extends EventEmitter implements MediaPlugin 
   spotify?: Spotilocal
   lastStatus: Status
   progressIntervalHandle: NodeJS.Timer
+  nextTrack?: () => void | Promise<void> | Promise<Status>
+  previousTrack?: () => void | Promise<void> | Promise<Status>
+
   constructor (playerManager: PlayerManager, config: HyperMediaConfig & { spotifyLocal: HyperMediaSpotifyLocalConfig | undefined }) {
     super()
     this.playerManager = playerManager
@@ -116,3 +120,5 @@ export class HyperMediaSpotifyLocal extends EventEmitter implements MediaPlugin 
     })
   }
 }
+
+transform(HyperMediaSpotifyLocal)
