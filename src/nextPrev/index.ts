@@ -7,12 +7,8 @@ export function transform (spotifyLocal: typeof HyperMediaSpotifyLocal): void {
     case 'darwin':
       transformSpotifyLocal = require('./darwin')
       break
-    case 'linux':
-      transformSpotifyLocal = require('./linux')
-      break
     default:
-      console.warn(`hyper-media-control-spotify-local: Platform "${os.platform()}" does not have a specific previous/next track implementation. Simulating media key presses.`)
-      transformSpotifyLocal = require('./default')
+      console.warn(`hyper-media-control-spotify-local: Platform "${os.platform()}" does not have a specific previous/next track implementation.`)
       break
   }
 
